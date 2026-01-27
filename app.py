@@ -209,7 +209,7 @@ def admin_users():
     """Page admin pour voir tous les utilisateurs"""
     
     # ASSERTION
-    assert current_user.username == 'archibogue88', "Accès refusé - Vous n'êtes pas admin"
+    assert current_user.username == 'TeamcipoModo', "Accès refusé - Vous n'êtes pas admin"
     
     all_users = User.query.order_by(User.money.desc()).all()
     
@@ -234,7 +234,7 @@ def admin_users():
 @login_required
 def admin_delete_user(user_id):
     # ASSERTIONS
-    assert current_user.username == 'archibogue88', "Accès refusé"
+    assert current_user.username == 'TeamcipoModo', "Accès refusé"
     assert user_id != current_user.id, "Tu ne peux pas te supprimer toi-même !"
     
     user = User.query.get(user_id)
@@ -250,7 +250,7 @@ def admin_delete_user(user_id):
 @login_required
 def admin_add_money(user_id):
     # ASSERTIONS
-    assert current_user.username == 'archibogue88', "Accès refusé"
+    assert current_user.username == 'TeamcipoModo', "Accès refusé"
     
     data = request.json
     amount = data.get('amount', 0)
@@ -272,14 +272,14 @@ def admin_add_money(user_id):
 @app.route('/admin/user/ban/<int:user_id>', methods=['POST'])
 @login_required
 def admin_ban_user(user_id):
-    assert current_user.username == 'archibogue88', "Accès refusé"
+    assert current_user.username == 'TeamcipoModo', "Accès refusé"
     
     data = request.json
     reason = data.get('reason', 'Aucune raison')
     
     user = User.query.get(user_id)
     assert user, "Utilisateur non trouvé"
-    assert user.username != 'archibogue88', "Tu ne peux pas te bannir"
+    assert user.username != 'TeamcipoModo', "Tu ne peux pas te bannir"
     
     user.is_banned = True
     user.ban_reason = reason
@@ -290,7 +290,7 @@ def admin_ban_user(user_id):
 @app.route('/admin/user/unban/<int:user_id>', methods=['POST'])
 @login_required
 def admin_unban_user(user_id):
-    assert current_user.username == 'archibogue88', "Accès refusé"
+    assert current_user.username == 'TeamcipoModo', "Accès refusé"
     
     user = User.query.get(user_id)
     assert user, "Utilisateur non trouvé"
@@ -304,7 +304,7 @@ def admin_unban_user(user_id):
 @app.route('/admin/user/set_money/<int:user_id>', methods=['POST'])
 @login_required
 def admin_set_money(user_id):
-    assert current_user.username == 'archibogue88', "Accès refusé"
+    assert current_user.username == 'TeamcipoModo', "Accès refusé"
     
     data = request.json
     amount = int(data.get('amount', 0))
@@ -323,7 +323,7 @@ def admin_set_money(user_id):
 @login_required
 def admin_email_page():
     """Page d'envoi d'emails"""
-    assert current_user.username == 'archibogue88', "Accès refusé"
+    assert current_user.username == 'TeamcipoModo', "Accès refusé"
     
     total_users = User.query.count()
     return render_template('admin_email.html', total_users=total_users)
@@ -332,7 +332,7 @@ def admin_email_page():
 @login_required
 def admin_send_email():
     """Envoie un email à tous les utilisateurs"""
-    assert current_user.username == 'archibogue88', "Accès refusé"
+    assert current_user.username == 'TeamcipoModo', "Accès refusé"
     
     data = request.json
     subject = data.get('subject', '').strip()
@@ -491,7 +491,7 @@ https://casinoeuil.nagipi.com
 @login_required
 def admin_test_email():
     """Envoie un email de test à l'admin"""
-    assert current_user.username == 'archibogue88', "Accès refusé"
+    assert current_user.username == 'TeamcipoModo', "Accès refusé"
     
     try:
         send_email(
