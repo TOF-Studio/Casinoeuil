@@ -329,7 +329,7 @@
                         <td>{{ user.id }}</td>
                         <td>
                             <strong>{{ user.username }}</strong>
-                            {% if user.username == 'archibogue88' %}
+                            {% if user.username == 'TeamcipoModo' %}
                             <span style="color: #ef4444; font-size: 12px;">👑 ADMIN</span>
                             {% endif %}
                         </td>
@@ -338,7 +338,7 @@
                         <td>{{ user.created_at }}</td>
                         <td>{{ user.last_login }}</td>
                         <td>
-    {% if user.username == 'archibogue88' %}
+    {% if user.username == 'TeamcipoModo' %}
     <button class="action-btn btn-add" onclick="setMyMoney()">💰 Me donner $</button>
     {% else %}
     <button class="action-btn btn-add" onclick="addMoney({{ user.id }}, '{{ user.username }}')">💰 Donner $</button>
