@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mon Profil - Casinoeuil</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favico2n.ico') }}">
+    <style>
+        .profile-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .profile-header {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            border-radius: 16px;
+            padding: 32px;
+            margin-bottom: 32px;
+            display: flex;
+            align-items: center;
+            gap: 24px;
+        }
+
+        .profile-avatar {
+            width: 100px;
+            height: 100px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .profile-info h1 {
+            font-size: 32px;
+            margin-bottom: 8px;
+        }
+
+        .profile-info .member-since {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+
+        .stats-overview {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+
+        .stat-card-large {
+            background: #1e293b;
+            border: 1px solid rgba(148, 163, 184, 0.1);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .stat-icon {
+            font-size: 32px;
+            margin-bottom: 8px;
+        }
+
+        .stat-card-large .stat-value {
+            font-size: 28px;
+            font-weight: bold;
+            color: #f59e0b;
+            margin-bottom: 4px;
+        }
+
+        .stat-card-large .stat-label {
+            color: #94a3b8;
+            font-size: 13px;
+        }
+
+        .section {
+            background: #1e293b;
+            border: 1px solid rgba(148, 163, 184, 0.1);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+
+        .section h2 {
+            color: #f59e0b;
+            font-size: 24px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        /* NOUVEAU : Styles pour le graphique */
+        .chart-container {
+            position: relative;
+            height: 300px;
+            background: rgba(15, 23, 42, 0.5);
+            border-radius: 8px;
+            padding: 20px;
+        }
+
+        .chart-canvas {
+            width: 100%;
+            height: 100%;
+        }
+
+        .no-data {
+            text-align: center;
+            padding: 40px;
+            color: #64748b;
+        }
+
+        .achievements-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 16px;
+        }
+
+        .achievement-card {
+            background: rgba(15, 23, 42, 0.5);
+            border: 1px solid rgba(148, 163, 184, 0.1);
+            border-radius: 8px;
+            padding: 16px;
+            display: flex;
+            gap: 16px;
+            align-items: center;
+            transition: all 0.3s;
+        }
+
+        .achievement-card.unlocked {
+            border-color: #f59e0b;
+            background: rgba(245, 158, 11, 0.1);
+        }
+
+        .achievement-card.locked {
+            opacity: 0.5;
+        }
+
+        .achievement-icon {
+            font-size: 48px;
+            filter: grayscale(100%);
+        }
+
+        .achievement-card.unlocked .achievement-icon {
+            filter: none;
+        }
+
+        .achievement-info h3 {
+            font-size: 16px;
+            margin-bottom: 4px;
+            color: #cbd5e1;
+        }
+
+        .achievement-info p {
+            font-size: 13px;
+            color: #94a3b8;
+        }
+
+        .achievement-reward {
+            margin-top: 8px;
+            font-size: 12px;
+            color: #22c55e;
+            font-weight: 600;
+        }
+
+        .back-to-game {
+            display: inline-block;
+            background: #3b82f6;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s;
+            margin-bottom: 24px;
+        }
+
+        .back-to-game:hover {
+            background: #2563eb;
+            transform: translateY(-2px);
+        }
+
+        @media (max-width: 768px) {
+            .profile-header {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .chart-container {
+                height: 250px;
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+    <div class="sidebar-logo">
+        <img src="https://github.com/user-attachments/assets/157c47f8-dfc5-45f4-99f2-7f835b5b019f" alt="Logo" style="width: 50px; height: auto;">
+    </div>
+    
+    <div class="sidebar-header">
+    <div class="sidebar-money">
+        <div class="sidebar-money-value">{{ current_user.money }} $</div>
+    </div>
+    <div class="sidebar-income" id="sidebarIncome">+0 $/s</div>
+</div>
+    
+    <div class="sidebar-menu">
+        <a href="/" class="sidebar-item">
+            <span class="sidebar-icon">🏠</span>
+            <span class="sidebar-text">Accueil</span>
+        </a>
+        
+        <a href="/social" class="sidebar-item">
+            <span class="sidebar-icon">👥</span>
+            <span class="sidebar-text">Amis</span>
+        </a>
+        
+        <a href="/clans" class="sidebar-item">
+            <span class="sidebar-icon">🏰</span>
+            <span class="sidebar-text">Clans</span>
+        </a>
+        
+        <a href="/profile" class="sidebar-item active">
+    <span class="sidebar-icon">👤</span>
+    <span class="sidebar-text">Profil</span>
+</a>
+        
+        {% if current_user.username == 'archibogue88' %}
+        <a href="/admin/users" class="sidebar-item">
+            <span class="sidebar-icon">🔧</span>
+            <span class="sidebar-text">Admin</span>
+        </a>
+        {% endif %}
+    </div>
+    
+    <div class="sidebar-footer">
+        <a href="/logout" class="sidebar-item logout">
+            <span class="sidebar-icon">🚪</span>
+            <span class="sidebar-text">Déconnexion</span>
+        </a>
+    </div>
+</div>
+
+    <div class="profile-container" style="padding-left: calc(220px + 40px); padding-right: 40px; margin-left: auto; margin-right: auto;">
+        <div class="profile-header">
+            <div class="profile-avatar">👨‍💼</div>
+            <div class="profile-info">
+                <h1>{{ current_user.username }}</h1>
+                <div class="member-since">
+                    Membre depuis le {{ current_user.created_at.strftime('%d/%m/%Y') }}
+                </div>
+            </div>
+        </div>
+
+        <div class="stats-overview">
+            <div class="stat-card-large">
+                <div class="stat-icon">💰</div>
+                <div class="stat-value" id="totalMoney">{{ current_user.money }} $</div>
+                <div class="stat-label">Solde actuel</div>
+            </div>
+            <div class="stat-card-large">
+                <div class="stat-icon">🎮</div>
+                <div class="stat-value" id="totalGames">0</div>
+                <div class="stat-label">Parties jouées</div>
+            </div>
+            <div class="stat-card-large">
+                <div class="stat-icon">🏆</div>
+                <div class="stat-value" id="totalWins">0</div>
+                <div class="stat-label">Victoires</div>
+            </div>
+            <div class="stat-card-large">
+                <div class="stat-icon">📊</div>
+                <div class="stat-value" id="winRate">0%</div>
+                <div class="stat-label">Taux de victoire</div>
+            </div>
+            <div class="stat-card-large">
+                <div class="stat-icon">💸</div>
+                <div class="stat-value" id="netProfit">0 $</div>
+                <div class="stat-label">Profit net</div>
+            </div>
+        </div>
+
+        <!-- NOUVEAU : Graphique au lieu de l'historique -->
+        <div class="section">
+            <h2>📈 Évolution de l'argent (10 dernières parties)</h2>
+            <div class="chart-container">
+                <canvas id="moneyChart" class="chart-canvas"></canvas>
+            </div>
+            <div id="noChartData" class="no-data" style="display: none;">
+                Jouez quelques parties pour voir votre progression !
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>🏆 Achievements</h2>
+            <div class="achievements-grid" id="achievementsGrid">
+                <div class="no-data">Chargement des achievements...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+    <script>
+        let moneyChart = null;
+
+         function formatMoney(amount) {
+        if (amount >= 1000000000) {
+            return (amount / 1000000000).toFixed(1) + 'B';
+        } else if (amount >= 1000000) {
+            return (amount / 1000000).toFixed(1) + 'M';
+        } else if (amount >= 1000) {
+            return (amount / 1000).toFixed(1) + 'K';
+        }
+        return amount.toString();
+    }
+
+        // Charger les statistiques
+        async function loadStats() {
+        try {
+            const response = await fetch('/api/user_stats');
+            const stats = await response.json();
+
+            document.getElementById('totalGames').textContent = stats.total_games;
+            document.getElementById('totalWins').textContent = stats.total_wins;
+            document.getElementById('winRate').textContent = stats.win_rate + '%';
+            document.getElementById('netProfit').textContent = formatMoney(stats.net_profit) + ' $';
+            
+            const profitEl = document.getElementById('netProfit');
+            profitEl.style.color = stats.net_profit >= 0 ? '#22c55e' : '#ef4444';
+        } catch (error) {
+            console.error('Erreur lors du chargement des stats:', error);
+        }
+    }
+
+        // NOUVEAU : Charger et afficher le graphique
+        async function loadMoneyChart() {
+        try {
+            const response = await fetch('/api/user_money_history');
+            const data = await response.json();
+
+            if (data.length === 0) {
+                document.querySelector('.chart-container').style.display = 'none';
+                document.getElementById('noChartData').style.display = 'block';
+                return;
+            }
+
+            const labels = data.map(d => `Partie ${d.game_number}`);
+            const moneyValues = data.map(d => d.money);
+            
+            const gameColors = {
+                'blackjack': '#3b82f6',
+                'roulette': '#ef4444',
+                'minebomb': '#f59e0b',
+                'slots': '#8b5cf6'
+            };
+
+            const pointColors = data.map(d => gameColors[d.game_type] || '#94a3b8');
+
+            const ctx = document.getElementById('moneyChart').getContext('2d');
+            
+            if (moneyChart) {
+                moneyChart.destroy();
+            }
+
+            moneyChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Argent ($)',
+                        data: moneyValues,
+                        borderColor: '#f59e0b',
+                        backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.3,
+                        pointBackgroundColor: pointColors,
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2,
+                        pointRadius: 6,
+                        pointHoverRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(30, 41, 59, 0.95)',
+                            titleColor: '#f59e0b',
+                            bodyColor: '#fff',
+                            borderColor: '#f59e0b',
+                            borderWidth: 1,
+                            padding: 12,
+                            displayColors: false,
+                            callbacks: {
+                                label: function(context) {
+                                    const index = context.dataIndex;
+                                    const gameData = data[index];
+                                    const profit = gameData.profit;
+                                    const profitText = profit >= 0 ? `+${formatMoney(profit)}$` : `${formatMoney(profit)}$`;
+                                    return [
+                                        `Argent: ${formatMoney(context.parsed.y)}$`,
+                                        `Jeu: ${gameData.game_type}`,
+                                        `Profit: ${profitText}`,
+                                        `Heure: ${gameData.date}`
+                                    ];
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            grid: {
+                                color: 'rgba(148, 163, 184, 0.1)'
+                            },
+                            ticks: {
+                                color: '#94a3b8',
+                                callback: function(value) {
+                                    return formatMoney(value) + '$';
+                                }
+                            }
+                        },
+                        x: {
+                            grid: {
+                                color: 'rgba(148, 163, 184, 0.1)'
+                            },
+                            ticks: {
+                                color: '#94a3b8'
+                            }
+                        }
+                    }
+                }
+            });
+
+        } catch (error) {
+            console.error('Erreur lors du chargement du graphique:', error);
+            document.querySelector('.chart-container').style.display = 'none';
+            document.getElementById('noChartData').style.display = 'block';
+        }
+    }
+
+        // Charger les achievements
+        async function loadAchievements() {
+        try {
+            const response = await fetch('/api/user_achievements');
+            const achievements = await response.json();
+            
+            const achievementsGrid = document.getElementById('achievementsGrid');
+            
+            if (achievements.length === 0) {
+                achievementsGrid.innerHTML = '<div class="no-data">Aucun achievement disponible</div>';
+                return;
+            }
+
+            achievementsGrid.innerHTML = achievements.map(ach => `
+                <div class="achievement-card ${ach.unlocked ? 'unlocked' : 'locked'}">
+                    <div class="achievement-icon">${ach.icon}</div>
+                    <div class="achievement-info">
+                        <h3>${ach.name}</h3>
+                        <p>${ach.description}</p>
+                        ${ach.unlocked ? '<div class="achievement-reward">✅ Débloqué</div>' : 
+                                        `<div class="achievement-reward">🎁 Récompense: ${formatMoney(ach.reward)}$</div>`}
+                    </div>
+                </div>
+            `).join('');
+        } catch (error) {
+            console.error('Erreur chargement achievements:', error);
+            document.getElementById('achievementsGrid').innerHTML = 
+                '<div class="no-data">Erreur de chargement</div>';
+        }
+    }
+
+        // Charger toutes les données au chargement de la page
+        document.addEventListener('DOMContentLoaded', () => {
+            loadStats();
+            loadMoneyChart();
+            loadAchievements();
+        });
+function formatMoney(amount) {
+    if (amount >= 1000000000) {
+        return (amount / 1000000000).toFixed(1) + 'B';
+    } else if (amount >= 1000000) {
+        return (amount / 1000000).toFixed(1) + 'M';
+    } else if (amount >= 1000) {
+        return (amount / 1000).toFixed(1) + 'K';
+    }
+    return amount.toString();
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    const moneyEl = document.querySelector('.sidebar-money-value');
+    if (moneyEl) {
+        const amount = parseInt(moneyEl.textContent.replace(/[^0-9]/g, ''));
+        moneyEl.textContent = formatMoney(amount) + ' $';
+    }
+});
+    </script>
+    
+
+</body>
+</html>
