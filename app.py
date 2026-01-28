@@ -365,7 +365,7 @@ Bonjour {{username}},
 
 ---
 L'équipe Casinoeuil
-https://casinoeuil.nagipi.com
+https://casinoeuil-r0xp.onrender.com
     """
     
     html_body = f"""
@@ -1350,7 +1350,7 @@ def minebomb_start():
     
     # ASSERTIONS
     assert bet >= 10, "Mise minimum : 10$"
-    assert bet <= 10000, "Mise maximum : 2500$ sur MineBomb"
+    assert bet <= 2500, "Mise maximum : 2500$ sur MineBomb"
     assert bet <= current_user.money, "Mise trop élevée"
     assert 3 <= bombs <= 10, "Entre 3 et 10 bombes"
     

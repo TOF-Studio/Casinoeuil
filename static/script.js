@@ -17,7 +17,7 @@ let bankCost = 5000;
 let mbGameActive = false;
 let mbRevealed = [];
 
-// Variable pour empêcher le spam de la roulette
+// Empeche le Spam de la roulette
 let rouletteSpinning = false;
 
 // Gestion de la sidebar
@@ -243,38 +243,207 @@ function updateMoneyDisplay(money) {
     const sidebarMoney = document.getElementById('sidebarMoney');
     if (sidebarMoney) {
         sidebarMoney.textContent = formatMoney(money) + ' $';
+        sidebarMoney.classList.add('pulse');
+        setTimeout(() => sidebarMoney.classList.remove('pulse'), 500);
     }
 }
-
 // ============================================
-// GESTION STATS
+// STATISTIQUES
 // ============================================
 function updateStatsDisplay(stats) {
-    const elements = {
-        totalGames: document.getElementById('totalGames'),
-        totalWins: document.getElementById('totalWins'),
-        winRate: document.getElementById('winRate'),
-        biggestWin: document.getElementById('biggestWin'),
-        totalWagered: document.getElementById('totalWagered'),
-        totalProfit: document.getElementById('totalProfit')
-    };
+    // VÉRIFIER SI LES ÉLÉMENTS EXISTENT (seulement sur index.html)
+    const totalGames = document.getElementById('totalGames');
+    if (!totalGames) return; // Si pas sur la page principale, on skip
     
-    for (const [key, element] of Object.entries(elements)) {
-        if (element && stats[key] !== undefined) {
-            if (key === 'winRate') {
-                element.textContent = stats[key] + '%';
-            } else if (key === 'biggestWin' || key === 'totalWagered' || key === 'totalProfit') {
-                element.textContent = formatMoney(stats[key]) + ' $';
-            } else {
-                element.textContent = stats[key];
-            }
+    // Maintenant on peut mettre à jour en toute sécurité
+    totalGames.textContent = stats.totalGames;
+    document.getElementById('totalWins').textContent = stats.totalWins;
+    document.getElementById('totalLosses').textContent = stats.totalLosses;
+    document.getElementById('biggestWin').textContent = stats.biggestWin + ' $';
+    document.getElementById('biggestLoss').textContent = stats.biggestLoss + ' $';
+    document.getElementById('totalWagered').textContent = stats.totalWagered + ' $';
+    document.getElementById('totalWinnings').textContent = stats.totalWinnings + ' $';
+    
+    const winRate = stats.totalGames > 0 ? ((stats.totalWins / stats.totalGames) * 100).toFixed(1) : 0;
+    document.getElementById('winRate').textContent = winRate + '%';
+    
+    // BlackJack
+    const bjGames = document.getElementById('bjGames');
+    if (bjGames) {
+        bjGames.textContent = stats.blackjack.games;
+        document.getElementById('bjWins').textContent = stats.blackjack.wins;
+        const bjWinRate = stats.blackjack.games > 0 ? ((stats.blackjack.wins / stats.blackjack.games) * 100).toFixed(1) : 0;
+        document.getElementById('bjWinRate').textContent = bjWinRate + '%';
+        const bjProfit = stats.blackjack.won - stats.blackjack.wagered;
+        document.getElementById('bjProfit').textContent = bjProfit + ' $';
+        document.getElementById('bjProfit').style.color = bjProfit >= 0 ? '#22c55e' : '#ef4444';
+    }
+    
+    // Roulette
+    const rouletteGames = document.getElementById('rouletteGames');
+    if (rouletteGames) {
+        rouletteGames.textContent = stats.roulette.games;
+        document.getElementById('rouletteWins').textContent = stats.roulette.wins;
+        const rouletteWinRate = stats.roulette.games > 0 ? ((stats.roulette.wins / stats.roulette.games) * 100).toFixed(1) : 0;
+        document.getElementById('rouletteWinRate').textContent = rouletteWinRate + '%';
+        const rouletteProfit = stats.roulette.won - stats.roulette.wagered;
+        document.getElementById('rouletteProfit').textContent = rouletteProfit + ' $';
+        document.getElementById('rouletteProfit').style.color = rouletteProfit >= 0 ? '#22c55e' : '#ef4444';
+    }
+    
+    // MineBomb
+    const mbGames = document.getElementById('mbGames');
+    if (mbGames) {
+        mbGames.textContent = stats.minebomb.games;
+        document.getElementById('mbWins').textContent = stats.minebomb.wins;
+        const mbWinRate = stats.minebomb.games > 0 ? ((stats.minebomb.wins / stats.minebomb.games) * 100).toFixed(1) : 0;
+        document.getElementById('mbWinRate').textContent = mbWinRate + '%';
+        const mbProfit = stats.minebomb.won - stats.minebomb.wagered;
+        document.getElementById('mbProfit').textContent = mbProfit + ' $';
+        document.getElementById('mbProfit').style.color = mbProfit >= 0 ? '#22c55e' : '#ef4444';
+    }
+    
+    // Slots
+    if (stats.slots) {
+        const slotsGames = document.getElementById('slotsGames');
+        if (slotsGames) {
+            slotsGames.textContent = stats.slots.games;
+            document.getElementById('slotsWins').textContent = stats.slots.wins;
+            const slotsWinRate = stats.slots.games > 0 ? ((stats.slots.wins / stats.slots.games) * 100).toFixed(1) : 0;
+            document.getElementById('slotsWinRate').textContent = slotsWinRate + '%';
+            const slotsProfit = stats.slots.won - stats.slots.wagered;
+            document.getElementById('slotsProfit').textContent = slotsProfit + ' $';
+            document.getElementById('slotsProfit').style.color = slotsProfit >= 0 ? '#22c55e' : '#ef4444';
         }
     }
 }
 
 // ============================================
+// MONEY CLICKER
+// ============================================
+
+function showFloatingNumber(amount) {
+    const container = document.getElementById('floatingNumbers');
+    const floatingNum = document.createElement('div');
+    floatingNum.className = 'floating-number';
+    floatingNum.textContent = '+' + amount + ' $';
+    floatingNum.style.left = (Math.random() * 200 - 100) + 'px';
+    container.appendChild(floatingNum);
+    
+    setTimeout(() => {
+        floatingNum.remove();
+    }, 2000);
+}
+
+async function buyUpgrade(type) {
+    try {
+        const response = await fetch('/api/clicker/upgrade', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({type})
+        });
+        
+        if (!response.ok) {
+            const error = await response.json();
+            alert(error.error);
+            return;
+        }
+        
+        const data = await response.json();
+        updateMoneyDisplay(data.money);
+        
+        clickPower = data.clickPower;
+        clickLevel = data.clickLevel;
+        autoLevel = data.autoLevel;
+        factoryLevel = data.factoryLevel;
+        bankLevel = data.bankLevel;
+        
+        clickCost = data.clickCost;
+        autoCost = data.autoCost;
+        factoryCost = data.factoryCost;
+        bankCost = data.bankCost;
+        
+        passiveIncome = data.passiveIncome;
+        
+        updateClickerDisplay();
+        
+    } catch (error) {
+        console.error('Erreur upgrade:', error);
+    }
+}
+
+function updateClickerDisplay() {
+    document.getElementById('clickValue').textContent = clickPower;
+    document.getElementById('clickLevel').textContent = clickLevel;
+    document.getElementById('autoLevel').textContent = autoLevel;
+    document.getElementById('factoryLevel').textContent = factoryLevel;
+    document.getElementById('bankLevel').textContent = bankLevel;
+    
+    document.getElementById('clickCost').textContent = clickCost;
+    document.getElementById('autoCost').textContent = autoCost;
+    document.getElementById('factoryCost').textContent = factoryCost;
+    document.getElementById('bankCost').textContent = bankCost;
+    
+    const sidebarIncome = document.getElementById('sidebarIncome');
+    if (sidebarIncome) {
+        sidebarIncome.textContent = '+' + passiveIncome + ' $/s';
+    }
+}
+
+function startPassiveIncome() {
+    setInterval(async () => {
+        if (passiveIncome > 0) {
+            try {
+                const response = await fetch('/api/clicker/passive', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'}
+                });
+                
+                const data = await response.json();
+                updateMoneyDisplay(data.money);
+            } catch (error) {
+                console.error('Erreur revenu passif:', error);
+            }
+        }
+    }, 1000);
+}
+
+// ============================================
 // BLACKJACK
 // ============================================
+function displayHand(player, cards, total, hideSecond = false) {
+    const cardsDiv = document.getElementById(player + 'Cards');
+    const totalSpan = document.getElementById(player + 'Total');
+    
+    // Vérification de sécurité
+    if (!cardsDiv || !totalSpan) {
+        console.error(`Éléments HTML manquants pour ${player}`);
+        return;
+    }
+    
+    if (!cards || !Array.isArray(cards)) {
+        console.error('Cards invalide:', cards);
+        return;
+    }
+    
+    cardsDiv.innerHTML = '';
+    
+    cards.forEach((card, index) => {
+        const cardDiv = document.createElement('div');
+        if (hideSecond && index === 1) {
+            cardDiv.className = 'card card-back';
+            cardDiv.textContent = '🂠';
+        } else {
+            const isRed = card.suit === '♥' || card.suit === '♦';
+            cardDiv.className = 'card' + (isRed ? ' red' : '');
+            cardDiv.innerHTML = card.value + '<br>' + card.suit;
+        }
+        cardsDiv.appendChild(cardDiv);
+    });
+    
+    totalSpan.textContent = total;
+}
+
 async function startBlackjack() {
     const bet = parseInt(document.getElementById('bjBet').value);
     
@@ -292,24 +461,69 @@ async function startBlackjack() {
         }
         
         const data = await response.json();
-        
         updateMoneyDisplay(data.money);
         
+        // Gérer Blackjack naturel
+        if (data.natural_result) {
+            document.getElementById('bjBetting').style.display = 'none';
+            document.getElementById('bjGame').style.display = 'block';
+            
+            displayHand('player', data.player_hand, data.player_total);
+            displayHand('dealer', data.dealer_hand, data.dealer_total, false);
+            
+            const msgDiv = document.getElementById('bjMessage');
+            msgDiv.className = 'message';
+            
+            if (data.natural_result === 'blackjack') {
+                msgDiv.classList.add('win');
+            } else if (data.natural_result === 'push') {
+                msgDiv.classList.add('info');
+            } else {
+                msgDiv.classList.add('lose');
+            }
+            
+            msgDiv.innerHTML = data.result_message;
+            
+            updateStatsDisplay(data.stats);
+            
+            // Désactiver les boutons
+            document.getElementById('hitBtn').disabled = true;
+            document.getElementById('standBtn').disabled = true;
+            document.getElementById('doubleBtn').style.display = 'none';
+            
+            setTimeout(() => {
+                document.getElementById('bjGame').style.display = 'none';
+                document.getElementById('bjBetting').style.display = 'block';
+                msgDiv.innerHTML = '';
+            }, 3000);
+            
+            return;
+        }
+        
+        // Partie normale
         document.getElementById('bjBetting').style.display = 'none';
         document.getElementById('bjGame').style.display = 'block';
         document.getElementById('bjMessage').innerHTML = '';
         
+        // Update deck info
+        document.getElementById('deckInfo').innerHTML = `
+            Cette partie utilise <strong>${data.num_decks} paquet${data.num_decks > 1 ? 's' : ''} de cartes</strong>
+        `;
+        
         displayHand('player', data.player_hand, data.player_total);
-        displayHand('dealer', data.dealer_hand, data.dealer_total, true);
+        // Afficher seulement la première carte du croupier
+        displayHand('dealer', data.dealer_hand.slice(0, 1), '?', true);
         
         document.getElementById('hitBtn').disabled = false;
         document.getElementById('standBtn').disabled = false;
         
-        // Afficher le bouton Double si possible
-        if (data.can_double) {
-            document.getElementById('doubleBtn').style.display = 'inline-block';
+        // Afficher le bouton Double si assez d'argent
+        const doubleBtn = document.getElementById('doubleBtn');
+        if (data.money >= bet) {
+            doubleBtn.style.display = 'inline-block';
+            doubleBtn.disabled = false;
         } else {
-            document.getElementById('doubleBtn').style.display = 'none';
+            doubleBtn.style.display = 'none';
         }
         
     } catch (error) {
@@ -318,149 +532,39 @@ async function startBlackjack() {
     }
 }
 
-function displayHand(who, cards, total, hideFirst = false) {
-    const container = document.getElementById(who + 'Hand');
-    container.innerHTML = '';
-    
-    cards.forEach((card, index) => {
-        const cardDiv = document.createElement('div');
-        cardDiv.className = 'card';
-        
-        if (hideFirst && index === 0) {
-            cardDiv.innerHTML = `
-                <div class="card-back">?</div>
-            `;
-        } else {
-            const suitSymbol = {
-                'Hearts': '♥',
-                'Diamonds': '♦',
-                'Clubs': '♣',
-                'Spades': '♠'
-            }[card.suit];
-            
-            const color = (card.suit === 'Hearts' || card.suit === 'Diamonds') ? 'red' : 'black';
-            
-            cardDiv.innerHTML = `
-                <div class="card-front ${color}">
-                    <div class="card-corner top">${card.rank}${suitSymbol}</div>
-                    <div class="card-center">${suitSymbol}</div>
-                    <div class="card-corner bottom">${card.rank}${suitSymbol}</div>
-                </div>
-            `;
-        }
-        
-        container.appendChild(cardDiv);
-    });
-    
-    const totalDiv = document.getElementById(who + 'Total');
-    if (hideFirst) {
-        totalDiv.textContent = 'Total: ?';
-    } else {
-        totalDiv.textContent = 'Total: ' + total;
-    }
-}
-
 async function hit() {
-    const btn = document.getElementById('hitBtn');
-    btn.disabled = true;
-    
     try {
         const response = await fetch('/api/blackjack/hit', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'}
         });
         
-        // Vérifier si erreur
-        if (!response.ok) {
-            const error = await response.json();
-            alert('❌ ' + (error.error || 'Erreur inconnue'));
-            btn.disabled = false;
-            return;
-        }
-        
         const data = await response.json();
-        
-        // Vérifier que les données existent
-        if (!data.player_hand || !data.dealer_hand) {
-            console.error('Données manquantes:', data);
-            alert('Erreur: données manquantes');
-            btn.disabled = false;
-            return;
-        }
-        
         displayHand('player', data.player_hand, data.player_total);
-        displayHand('dealer', data.dealer_hand, data.dealer_total, false);
         
-        // Masquer le bouton Double après le premier hit
+        // Cacher le bouton Double après avoir tiré
         document.getElementById('doubleBtn').style.display = 'none';
         
-        if (data.game_over) {
+        if (data.busted) {
             document.getElementById('hitBtn').disabled = true;
             document.getElementById('standBtn').disabled = true;
-            
-            const msgDiv = document.getElementById('bjMessage');
-            msgDiv.className = 'message';
-            
-            if (data.result === 'win') {
-                msgDiv.classList.add('win');
-            } else if (data.result === 'draw') {
-                msgDiv.classList.add('info');
-            } else {
-                msgDiv.classList.add('lose');
-            }
-            
-            msgDiv.innerHTML = data.result_message;
-            updateMoneyDisplay(data.money);
-            
-            if (data.stats) {
-                updateStatsDisplay(data.stats);
-            }
-            
-            setTimeout(() => {
-                document.getElementById('bjGame').style.display = 'none';
-                document.getElementById('bjBetting').style.display = 'block';
-                msgDiv.innerHTML = '';
-            }, 3000);
-        } else {
-            btn.disabled = false;
+            stand();
         }
         
     } catch (error) {
         console.error('Hit error:', error);
-        alert('❌ Erreur de connexion');
-        btn.disabled = false;
     }
 }
 
 async function stand() {
-    const btn = document.getElementById('standBtn');
-    btn.disabled = true;
-    
     try {
         const response = await fetch('/api/blackjack/stand', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'}
         });
         
-        // Vérifier si erreur
-        if (!response.ok) {
-            const error = await response.json();
-            alert('❌ ' + (error.error || 'Erreur inconnue'));
-            btn.disabled = false;
-            return;
-        }
-        
         const data = await response.json();
         
-        // Vérifier que les données existent
-        if (!data.player_hand || !data.dealer_hand) {
-            console.error('Données manquantes:', data);
-            alert('Erreur: données manquantes');
-            btn.disabled = false;
-            return;
-        }
-        
-        displayHand('player', data.player_hand, data.player_total);
         displayHand('dealer', data.dealer_hand, data.dealer_total, false);
         
         const msgDiv = document.getElementById('bjMessage');
@@ -468,33 +572,29 @@ async function stand() {
         
         if (data.result === 'win') {
             msgDiv.classList.add('win');
-        } else if (data.result === 'draw') {
-            msgDiv.classList.add('info');
-        } else {
+            msgDiv.innerHTML = `✅ Vous avez gagné !<br>Vous gagnez ${data.profit} $`;
+        } else if (data.result === 'lose') {
             msgDiv.classList.add('lose');
+            msgDiv.innerHTML = `❌ Vous avez perdu!`;
+        } else {
+            msgDiv.classList.add('info');
+            msgDiv.innerHTML = `🤝 ÉGALITÉ ! Votre mise vous a été retournée.`;
         }
-        
-        msgDiv.innerHTML = data.result_message;
-        
-        document.getElementById('hitBtn').disabled = true;
-        document.getElementById('doubleBtn').style.display = 'none';
         
         updateMoneyDisplay(data.money);
+        updateStatsDisplay(data.stats);
         
-        if (data.stats) {
-            updateStatsDisplay(data.stats);
-        }
+        document.getElementById('hitBtn').disabled = true;
+        document.getElementById('standBtn').disabled = true;
+        document.getElementById('doubleBtn').style.display = 'none';
         
         setTimeout(() => {
             document.getElementById('bjGame').style.display = 'none';
             document.getElementById('bjBetting').style.display = 'block';
-            msgDiv.innerHTML = '';
         }, 3000);
         
     } catch (error) {
         console.error('Stand error:', error);
-        alert('❌ Erreur de connexion');
-        btn.disabled = false;
     }
 }
 
@@ -572,7 +672,7 @@ async function doubleDown() {
 }
 
 // ============================================
-// ROULETTE - AVEC PROTECTION ANTI-SPAM
+// ROULETTE
 // ============================================
 function updateRouletteMode() {
     const mode = document.getElementById('rouletteMode').value;
@@ -699,8 +799,9 @@ async function spinRoulette() {
     }
 }
 
+
 // ============================================
-// MINEBOMB - CORRIGÉ
+// MINEBOMB
 // ============================================
 async function startMineBomb() {
     const bet = parseInt(document.getElementById('mbBet').value);
@@ -941,6 +1042,7 @@ async function cashout() {
     }
 }
 
+
 // ============================================
 // SLOT MACHINE
 // ============================================
@@ -1044,128 +1146,194 @@ const PLINKO_START_X = 425;
 const PLINKO_START_Y = 70;
 const GRAVITY = 0.5;
 const BOUNCE = 0.65;
+const FRICTION = 0.98;
 
-class PlinkoBall {
+// Classe Balle avec physique réaliste
+class Ball {
     constructor(x, y) {
         this.x = x;
         this.y = y;
-        this.vx = (Math.random() - 0.5) * 2;
+        this.vx = (Math.random() - 0.5) * 0.5; // Petite variation aléatoire initiale
         this.vy = 0;
         this.radius = PLINKO_BALL_RADIUS;
+        this.color = '#fbbf24';
+        this.glowIntensity = 0;
+        this.trail = [];
+        this.maxTrail = 12;
     }
 
     update() {
+        // Gravité
         this.vy += GRAVITY;
+        
+        // Friction de l'air très légère
+        this.vx *= FRICTION;
+        this.vy *= FRICTION;
+        
+        // Limiter vitesse max pour éviter bugs
+        const maxSpeed = 18;
+        const speed = Math.sqrt(this.vx * this.vx + this.vy * this.vy);
+        if (speed > maxSpeed) {
+            this.vx = (this.vx / speed) * maxSpeed;
+            this.vy = (this.vy / speed) * maxSpeed;
+        }
+        
+        // Update position
         this.x += this.vx;
         this.y += this.vy;
-
-        // Collision avec les pegs
-        plinkoPegs.forEach(peg => {
-            const dx = this.x - peg.x;
-            const dy = this.y - peg.y;
-            const dist = Math.sqrt(dx * dx + dy * dy);
-
-            if (dist < this.radius + peg.radius) {
-                peg.hit = true;
-
-                const angle = Math.atan2(dy, dx);
-                const targetX = peg.x + Math.cos(angle) * (this.radius + peg.radius);
-                const targetY = peg.y + Math.sin(angle) * (this.radius + peg.radius);
-
-                this.x = targetX;
-                this.y = targetY;
-
-                const normalX = dx / dist;
-                const normalY = dy / dist;
-
-                const dotProduct = this.vx * normalX + this.vy * normalY;
-                this.vx = (this.vx - 2 * dotProduct * normalX) * BOUNCE;
-                this.vy = (this.vy - 2 * dotProduct * normalY) * BOUNCE;
-
-                this.vx += (Math.random() - 0.5) * 3;
-            }
+        
+        // Trail effect
+        if (Math.random() > 0.3) {
+            this.trail.push({x: this.x, y: this.y, alpha: 1});
+        }
+        
+        // Fade trail
+        this.trail = this.trail.filter(t => {
+            t.alpha -= 0.05;
+            return t.alpha > 0;
         });
-
-        // Bordures
-        if (this.x - this.radius < 0) {
-            this.x = this.radius;
+        
+        if (this.trail.length > this.maxTrail) {
+            this.trail.shift();
+        }
+        
+        // Glow effect basé sur la vitesse
+        this.glowIntensity = Math.min(speed / 10, 1);
+        
+        // Collision avec pegs
+        this.checkPegCollisions();
+        
+        // Rebond sur les bords latéraux
+        if (this.x - this.radius < 20) {
+            this.x = 20 + this.radius;
             this.vx *= -BOUNCE;
         }
-        if (this.x + this.radius > plinkoCanvas.width) {
-            this.x = plinkoCanvas.width - this.radius;
+        if (this.x + this.radius > plinkoCanvas.width - 20) {
+            this.x = plinkoCanvas.width - 20 - this.radius;
             this.vx *= -BOUNCE;
         }
     }
 
+    checkPegCollisions() {
+        plinkoPegs.forEach(peg => {
+            const dx = this.x - peg.x;
+            const dy = this.y - peg.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            const minDist = this.radius + peg.radius;
+            
+            if (distance < minDist) {
+                // Collision détectée !
+                const angle = Math.atan2(dy, dx);
+                const targetX = peg.x + Math.cos(angle) * minDist;
+                const targetY = peg.y + Math.sin(angle) * minDist;
+                
+                // Corriger position
+                this.x = targetX;
+                this.y = targetY;
+                
+                // Calculer nouvelle vitesse avec effet de rebond
+                const speed = Math.sqrt(this.vx * this.vx + this.vy * this.vy);
+                this.vx = Math.cos(angle) * speed * BOUNCE;
+                this.vy = Math.sin(angle) * speed * BOUNCE;
+                
+                // Ajouter rotation aléatoire légère
+                const randomSpin = (Math.random() - 0.5) * 2;
+                this.vx += randomSpin;
+                
+                // Effet visuel sur le peg
+                peg.hit = true;
+                setTimeout(() => peg.hit = false, 150);
+            }
+        });
+    }
+
     draw(ctx) {
-        // Ombre
-        ctx.beginPath();
-        ctx.arc(this.x + 2, this.y + 2, this.radius, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
-        ctx.fill();
-
-        // Gradient
-        const gradient = ctx.createRadialGradient(
-            this.x - this.radius * 0.3,
-            this.y - this.radius * 0.3,
+        // Dessiner trail
+        this.trail.forEach((point, i) => {
+            const size = (this.radius * 0.6) * (i / this.trail.length);
+            ctx.beginPath();
+            ctx.arc(point.x, point.y, size, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(251, 191, 36, ${point.alpha * 0.4})`;
+            ctx.fill();
+        });
+        
+        // Glow effect
+        if (this.glowIntensity > 0) {
+            const gradient = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.radius * 2.5);
+            gradient.addColorStop(0, `rgba(251, 191, 36, ${this.glowIntensity * 0.6})`);
+            gradient.addColorStop(0.5, `rgba(251, 191, 36, ${this.glowIntensity * 0.3})`);
+            gradient.addColorStop(1, 'rgba(251, 191, 36, 0)');
+            
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.radius * 2.5, 0, Math.PI * 2);
+            ctx.fillStyle = gradient;
+            ctx.fill();
+        }
+        
+        // Balle principale avec gradient
+        const ballGradient = ctx.createRadialGradient(
+            this.x - this.radius * 0.3, 
+            this.y - this.radius * 0.3, 
             0,
-            this.x,
-            this.y,
-            this.radius * 1.5
+            this.x, 
+            this.y, 
+            this.radius
         );
-        gradient.addColorStop(0, '#fbbf24');
-        gradient.addColorStop(1, '#f59e0b');
-
+        ballGradient.addColorStop(0, '#fef3c7');
+        ballGradient.addColorStop(0.5, '#fbbf24');
+        ballGradient.addColorStop(1, '#d97706');
+        
         ctx.beginPath();
         ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-        ctx.fillStyle = gradient;
+        ctx.fillStyle = ballGradient;
         ctx.fill();
-
-        // Contour
-        ctx.strokeStyle = 'rgba(251, 191, 36, 0.8)';
+        
+        // Contour brillant
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
         ctx.lineWidth = 2;
         ctx.stroke();
-
+        
         // Reflet
         ctx.beginPath();
-        ctx.arc(
-            this.x - this.radius * 0.4,
-            this.y - this.radius * 0.4,
-            this.radius * 0.4,
-            0,
-            Math.PI * 2
-        );
+        ctx.arc(this.x - this.radius * 0.35, this.y - this.radius * 0.35, this.radius * 0.3, 0, Math.PI * 2);
         ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
         ctx.fill();
     }
 
     isAtBottom() {
-        return this.y > plinkoCanvas.height - this.radius - 100;
+        return this.y > plinkoCanvas.height - 50 && Math.abs(this.vy) < 1;
     }
 
     getFinalSlot() {
-        const slotWidth = plinkoCanvas.width / 17;
-        return Math.floor(this.x / slotWidth);
+        const slotsStart = 20;
+        const slotsEnd = plinkoCanvas.width - 20;
+        const totalWidth = slotsEnd - slotsStart;
+        const slotWidth = totalWidth / 17;
+        const slot = Math.floor((this.x - slotsStart) / slotWidth);
+        return Math.max(0, Math.min(16, slot));
     }
 }
 
-async function dropPlinkoBall() {
-    if (plinkoAnimating) return;
+async function dropPlinko() {
+    if (plinkoAnimating) {
+        alert('Une balle est déjà en train de tomber !');
+        return;
+    }
 
     const bet = parseInt(document.getElementById('plinkoBet').value);
     const risk = document.getElementById('plinkoRisk').value;
 
-    const btn = document.querySelector('#plinko button[onclick="dropPlinkoBall()"]');
+    if (!bet || bet < 10) {
+        alert('Mise minimum : 10$');
+        return;
+    }
+
+    const btn = document.getElementById('plinkoDropBtn');
     btn.disabled = true;
     plinkoAnimating = true;
 
-    // Reset pegs
-    plinkoPegs.forEach(peg => peg.hit = false);
-
-    // Lancer la balle
-    plinkoBall = new PlinkoBall(PLINKO_START_X, PLINKO_START_Y);
-
     try {
+        // Appel API
         const response = await fetch('/api/plinko/drop', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
@@ -1177,25 +1345,42 @@ async function dropPlinkoBall() {
             alert(error.error);
             btn.disabled = false;
             plinkoAnimating = false;
-            plinkoBall = null;
             return;
         }
 
         const data = await response.json();
 
-        // Attendre l'animation
-        await animatePlinko(data.slot);
+        // Initialiser si nécessaire
+        if (!plinkoCanvas) {
+            initPlinkoCanvas();
+        }
 
-        // Afficher le résultat
+        // Mettre à jour multiplicateurs
+        updatePlinkoMultipliers(risk);
+
+        // Créer et animer la balle
+        plinkoBall = new Ball(PLINKO_START_X, PLINKO_START_Y);
+        
+        await animatePlinko(data.position);
+
+        // Afficher résultat
         const msgDiv = document.getElementById('plinkoMessage');
         msgDiv.className = 'message';
 
         if (data.result === 'win') {
             msgDiv.classList.add('win');
-            msgDiv.innerHTML = `✅ Slot ${data.slot}!<br>Vous gagnez ${data.profit} $ (x${data.multiplier})`;
+            msgDiv.innerHTML = `
+                ✅ GAGNÉ !<br>
+                Multiplicateur : x${data.multiplier}<br>
+                <strong style="font-size: 24px;">+${data.profit} $</strong>
+            `;
         } else {
             msgDiv.classList.add('lose');
-            msgDiv.innerHTML = `❌ Slot ${data.slot}<br>Vous perdez ${Math.abs(data.profit)} $ (x${data.multiplier})`;
+            msgDiv.innerHTML = `
+                ❌ PERDU<br>
+                Multiplicateur : x${data.multiplier}<br>
+                <strong style="font-size: 20px;">${data.profit} $</strong>
+            `;
         }
 
         updateMoneyDisplay(data.money);
@@ -1203,12 +1388,13 @@ async function dropPlinkoBall() {
 
         setTimeout(() => {
             msgDiv.innerHTML = '';
-        }, 3000);
+            btn.disabled = false;
+            plinkoAnimating = false;
+        }, 4000);
 
     } catch (error) {
-        console.error('Plinko error:', error);
-        alert('Connection error');
-    } finally {
+        console.error('Erreur Plinko:', error);
+        alert('Erreur de connexion');
         btn.disabled = false;
         plinkoAnimating = false;
     }
@@ -1218,8 +1404,6 @@ function initPlinkoCanvas() {
     plinkoCanvas = document.getElementById('plinkoCanvas');
     if (!plinkoCanvas) return;
 
-    plinkoCanvas.width = 850;
-    plinkoCanvas.height = 950;
     plinkoCtx = plinkoCanvas.getContext('2d');
 
     // Créer les pegs
@@ -1467,163 +1651,3 @@ async function doClick() {
     }
 }
 
-async function buyClickUpgrade() {
-    try {
-        const response = await fetch('/api/clicker/buy/click', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'}
-        });
-        
-        if (!response.ok) {
-            const error = await response.json();
-            alert(error.error);
-            return;
-        }
-        
-        const data = await response.json();
-        
-        clickPower = data.clickPower;
-        clickLevel = data.clickLevel;
-        clickCost = data.clickCost;
-        
-        updateMoneyDisplay(data.money);
-        updateClickerDisplay();
-        
-    } catch (error) {
-        console.error('Erreur achat:', error);
-        alert('Connection error');
-    }
-}
-
-async function buyAutoUpgrade() {
-    try {
-        const response = await fetch('/api/clicker/buy/auto', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'}
-        });
-        
-        if (!response.ok) {
-            const error = await response.json();
-            alert(error.error);
-            return;
-        }
-        
-        const data = await response.json();
-        
-        autoLevel = data.autoLevel;
-        autoCost = data.autoCost;
-        passiveIncome = data.passiveIncome;
-        
-        updateMoneyDisplay(data.money);
-        updateClickerDisplay();
-        
-    } catch (error) {
-        console.error('Erreur achat:', error);
-        alert('Connection error');
-    }
-}
-
-async function buyFactoryUpgrade() {
-    try {
-        const response = await fetch('/api/clicker/buy/factory', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'}
-        });
-        
-        if (!response.ok) {
-            const error = await response.json();
-            alert(error.error);
-            return;
-        }
-        
-        const data = await response.json();
-        
-        factoryLevel = data.factoryLevel;
-        factoryCost = data.factoryCost;
-        passiveIncome = data.passiveIncome;
-        
-        updateMoneyDisplay(data.money);
-        updateClickerDisplay();
-        
-    } catch (error) {
-        console.error('Erreur achat:', error);
-        alert('Connection error');
-    }
-}
-
-async function buyBankUpgrade() {
-    try {
-        const response = await fetch('/api/clicker/buy/bank', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'}
-        });
-        
-        if (!response.ok) {
-            const error = await response.json();
-            alert(error.error);
-            return;
-        }
-        
-        const data = await response.json();
-        
-        bankLevel = data.bankLevel;
-        bankCost = data.bankCost;
-        passiveIncome = data.passiveIncome;
-        
-        updateMoneyDisplay(data.money);
-        updateClickerDisplay();
-        
-    } catch (error) {
-        console.error('Erreur achat:', error);
-        alert('Connection error');
-    }
-}
-
-function updateClickerDisplay() {
-    document.getElementById('clickPower').textContent = clickPower;
-    document.getElementById('clickLevel').textContent = clickLevel;
-    document.getElementById('clickCost').textContent = formatMoney(clickCost) + ' $';
-    
-    document.getElementById('autoLevel').textContent = autoLevel;
-    document.getElementById('autoCost').textContent = formatMoney(autoCost) + ' $';
-    
-    document.getElementById('factoryLevel').textContent = factoryLevel;
-    document.getElementById('factoryCost').textContent = formatMoney(factoryCost) + ' $';
-    
-    document.getElementById('bankLevel').textContent = bankLevel;
-    document.getElementById('bankCost').textContent = formatMoney(bankCost) + ' $';
-    
-    const incomePerSec = passiveIncome;
-    document.getElementById('sidebarIncome').textContent = '+' + formatMoney(incomePerSec) + ' $/s';
-}
-
-function showFloatingNumber(amount) {
-    const btn = document.getElementById('clickButton');
-    const rect = btn.getBoundingClientRect();
-    
-    const float = document.createElement('div');
-    float.className = 'floating-number';
-    float.textContent = '+' + amount;
-    float.style.left = (rect.left + rect.width / 2) + 'px';
-    float.style.top = (rect.top + rect.height / 2) + 'px';
-    
-    document.body.appendChild(float);
-    
-    setTimeout(() => {
-        float.remove();
-    }, 1000);
-}
-
-function startPassiveIncome() {
-    setInterval(async () => {
-        if (passiveIncome > 0) {
-            try {
-                const response = await fetch('/api/clicker/passive');
-                const data = await response.json();
-                updateMoneyDisplay(data.money);
-            } catch (error) {
-                console.error('Erreur passive income:', error);
-            }
-        }
-    }, 1000);
-}
