@@ -45,12 +45,14 @@ function formatMoney(amount) {
     amount = Number(amount);
     
     if (amount >= 1000000000) {
-        return (amount / 1000000000).toFixed(1) + 'B';
+        // Ex: 1.56B -> 15.6 -> 15 -> 1.5B
+        return (Math.floor(amount / 1000000000 * 10) / 10) + 'B';
     } else if (amount >= 1000000) {
-        return (amount / 1000000).toFixed(1) + 'M';
+        return (Math.floor(amount / 1000000 * 10) / 10) + 'M';
     } else if (amount >= 1000) {
-        return (amount / 1000).toFixed(1) + 'K';
+        return (Math.floor(amount / 1000 * 10) / 10) + 'K';
     }
+    
     return amount.toString();
 }
 
