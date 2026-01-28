@@ -666,7 +666,7 @@ pip install flask
 ## Credits
 
 <p align="center">
-  <strong>Fait par Teamcipo (& anciennement KAYOZZ)/strong><br>
+  <strong>Fait par Teamcipo (& anciennement KAYOZZ)</strong><br>
   <strong>Trust me with your Entertainment!</strong><br>
   <br>
   <img src="https://github.com/user-attachments/assets/157c47f8-dfc5-45f4-99f2-7f835b5b019f" width="3%" />
