@@ -1350,7 +1350,7 @@ def minebomb_start():
     
     # ASSERTIONS
     assert bet >= 10, "Mise minimum : 10$"
-    assert bet <= 10000, "Mise maximum : 2500$ sur MineBomb"
+    assert bet <= 10000, "Mise maximum : 10000$ sur MineBomb"
     assert bet <= current_user.money, "Mise trop élevée"
     assert 3 <= bombs <= 10, "Entre 3 et 10 bombes"
     
@@ -1573,6 +1573,7 @@ def slots_spin():
     
     # ASSERTIONS
     assert bet >= 10, "Mise minimum : 10$"
+    assert bet <= 15000, "Mise maximum : 15000$ sur la slots machine"
     assert bet <= current_user.money, "Mise trop élevée"
     
     current_user.remove_money(bet)
