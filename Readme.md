@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/d29729d4-da3d-4b22-a951-cbc7fc0d02ca" width="100%" />
+  <img src="https://github.com/user-attachments/assets/1e219156-2f0a-4db0-9318-7a966f31d47b" width="100%" />
 </p>
 
 <h1 align="center">Le SEUL casino dans lequel vous ne pouvez pas perdre d'argent.</h1>
