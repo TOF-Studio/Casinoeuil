@@ -305,6 +305,15 @@ http://localhost:5000
 
 **Bonus :** 2 symboles identiques = **2x** votre mise
 
+### Slot Machine
+
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/775ed07f-fd85-4dca-8694-b818d9d5250c" width="40%" />
+</p>
+
+Work In Progress
+
+
 ---
 
 ## Structure du Projet
