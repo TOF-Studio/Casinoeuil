@@ -1349,8 +1349,8 @@ def minebomb_start():
     bombs = int(data.get('bombs', 5))
     
     # ASSERTIONS
-    assert bet >= 10, "Mise minimum : 10$"
-    assert bet <= 10000, "Mise maximum : 10000$ sur MineBomb"
+    "assert bet >= 10, Mise minimum : 10$"
+    assert bet <= 0, "Le Jeu est down"
     assert bet <= current_user.money, "Mise trop élevée"
     assert 3 <= bombs <= 10, "Entre 3 et 10 bombes"
     
